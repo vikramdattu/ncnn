@@ -1,0 +1,10 @@
+# Cross compile static lib for ESP platforms
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_PROCESSOR xtensa)
+
+set(CMAKE_C_COMPILER "xtensa-esp32-elf-cc")
+set(CMAKE_CXX_COMPILER "xtensa-esp32-elf-g++")
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)

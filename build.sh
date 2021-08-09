@@ -80,6 +80,14 @@ make -j4
 make install
 popd
 
+##### cross compile for ESP platforms. benchmark is skipped for now
+mkdir -p build-esp32
+pushd build-esp32
+cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/esp32.toolchain.cmake -DNCNN_OPENMP=OFF -DNCNN_THREADS=OFF -DNCNN_RUNTIME_CPU=OFF -DNCNN_SIMPLEOCV=ON -DNCNN_BUILD_BENCHMARK=OFF -DNCNN_STDIO=OFF ..
+make -j4
+make install
+popd
+
 ##### linux of hisiv500 (Hi3516CV200 and Hi3519V101) toolchain with neon and openmp
 mkdir -p build-hisiv500-linux
 pushd build-hisiv500-linux
