@@ -34,6 +34,15 @@ extern const uint8_t nanodet_m_bin_end[]   asm("_binary_nanodet_m_bin_end");
 extern const uint8_t nanodet_m_param_start[] asm("_binary_nanodet_m_param_start");
 extern const uint8_t nanodet_m_param_end[]   asm("_binary_nanodet_m_param_end");
 
+extern const uint8_t image0_start[] asm("_binary_image0_rgb_start");
+extern const uint8_t image0_end[]   asm("_binary_image0_rgb_end");
+
+extern const uint8_t image1_start[] asm("_binary_image1_rgb_start");
+extern const uint8_t image1_end[]   asm("_binary_image1_rgb_end");
+
+extern const uint8_t image2_start[] asm("_binary_image2_rgb_start");
+extern const uint8_t image2_end[]   asm("_binary_image2_rgb_end");
+
 static const char* class_names[] = {
     "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
     "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
@@ -237,23 +246,14 @@ static void generate_proposals(const ncnn::Mat& cls_pred, const ncnn::Mat& dis_p
     }
 }
 
-static int detect_nanodet(const cv::Mat& bgr, std::vector<Object>& objects)
+static int detect_nanodet(const ncnn::Net& nanodet, const cv::Mat& bgr, std::vector<Object>& objects)
 {
-    ESP_LOGI(TAG, "Loading model...");
-
-    ncnn::Net nanodet;
-    //nanodet.opt.use_vulkan_compute = true;
-    // nanodet.opt.use_bf16_storage = true;
-
-    // original pretrained model from https://github.com/RangiLyu/nanodet
-    // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
-    nanodet.load_param(nanodet_m_param_start);
-    nanodet.load_model(nanodet_m_bin_start);
-
-    ESP_LOGI(TAG, "Model loaded...");
-
     int width = bgr.cols;
     int height = bgr.rows;
+
+    //printf("%02x%02x%02x%02x%02x%02x%02x%02x\n",
+    //        bgr.data[0], bgr.data[1], bgr.data[2],bgr.data[3],
+    //        bgr.data[4], bgr.data[5], bgr.data[6],bgr.data[7]);
 
     const int target_size = 320;
     const float prob_threshold = 0.4f;
@@ -333,6 +333,7 @@ static int detect_nanodet(const cv::Mat& bgr, std::vector<Object>& objects)
         proposals.insert(proposals.end(), objects32.begin(), objects32.end());
     }
 
+    printf("total_proposals: %d\n", proposals.size());
     // sort all proposals by score from highest to lowest
     qsort_descent_inplace(proposals);
 
@@ -445,14 +446,31 @@ extern "C" void app_main(void)
 
     printf("Minimum free heap size: %d bytes\n", esp_get_minimum_free_heap_size());
 
-    cv::Mat m(IMG_WD, IMG_HT, CV_8UC3);
-    /* We have not filled proper data yet */
+
+    ESP_LOGI(TAG, "Loading model...");
+
+    ncnn::Net nanodet;
+
+    // original pretrained model from https://github.com/RangiLyu/nanodet
+    // the ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
+    nanodet.load_param(nanodet_m_param_start);
+    nanodet.load_model(nanodet_m_bin_start);
+
+    ESP_LOGI(TAG, "Model loaded...");
+
+    /* Create a matrix with image data */
+    //cv::Mat m(IMG_WD, IMG_HT, CV_8UC3, (void *) image0_start);
+    //cv::Mat m(IMG_WD, IMG_HT, CV_8UC3, (void *) image1_start);
+    cv::Mat m(IMG_WD, IMG_HT, CV_8UC3, (void *) image2_start);
+
+    //printf("%02x%02x%02x%02x%02x%02x%02x%02x\n",
+    //        image1_start[0], image1_start[1], image1_start[2],image1_start[3],
+    //        image1_start[4], image1_start[5], image1_start[6],image1_start[7]);
 
     std::vector<Object> objects;
-    detect_nanodet(m, objects);
+    detect_nanodet(nanodet, m, objects);
 
     //print results
 
     dump_objects_data(m, objects);
-
 }
